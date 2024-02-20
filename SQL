@@ -1,1 +1,82 @@
+#Se revisaron campos nullos
+SELECT 
+COUNTIF(id IS NULL) AS id,
+COUNTIF(name IS NULL) AS name,
+COUNTIF(neighbourhood IS NULL) AS neighbourhood,
+COUNTIF(neighbourhood_group IS NULL) AS neighbourhood_group,
+COUNTIF(latitude IS NULL) AS latitude,
+COUNTIF(longitude IS NULL) AS longitude,
+COUNTIF(room_type IS NULL) AS room_type,
+COUNTIF(minimum_nights IS NULL) AS minimum_nights
+FROM `airbnb-412500.airbnb.rooms` 
+#Se verificaron duplicados
+SELECT  
+COUNT(*)-COUNT(DISTINCT hostid) AS hostid,
+COUNT(*)-COUNT(DISTINCT hostname) AS hostname,
+FROM `airbnb-412500.airbnb.hosts` 
+#Se verificaron duplicados
+SELECT  
+SELECT
+COUNT(*)-COUNT(DISTINCT id) AS id_duplicado,
+COUNT(*)-COUNT(DISTINCT host_id) AS host_id,
+COUNT(*)-COUNT(DISTINCT price) AS price,
+COUNT(*)-COUNT(DISTINCT number_of_reviews) AS number_of_reviews,
+COUNT(*)-COUNT(DISTINCT last_review) AS last_review,
+COUNT(*)-COUNT(DISTINCT reviews_per_month) AS reviews_per_month,
+COUNT(*)-COUNT(DISTINCT calculated_host_listings_count) AS calculated_host_listings_count,
+COUNT(*)-COUNT(DISTINCT availability_365) AS availability_365,
+FROM `airbnb-412500.airbnb.reviews`
+#Se creo una vista de room limpia
+WITH deduplicate AS (
+    SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY id ORDER BY id) AS row_num
+    FROM `airbnb-412500.airbnb.rooms` 
+)
+SELECT * 
+FROM deduplicate
+WHERE row_num = 1 AND REGEXP_CONTAINS(id,  r'^[0-9]+$')
+#Se creo otra tabla llamada host_clean sin duplicados 
+WITH deduplicate AS (
+    SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY hostid ORDER BY hostid) AS row_num
+    FROM `airbnb-412500.airbnb.hosts`
+)
+SELECT hostid,COALESCE(CAST(hostname AS STRING), '0') AS hostname
+FROM deduplicate
+WHERE row_num = 1 AND REGEXP_CONTAINS(hostid,  r'^[0-9]+$')
+#Se creo una tabla de reviews clean
+WITH deduplicate AS (
+    SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY id ORDER BY id) AS row_num
+    FROM `airbnb-412500.airbnb.reviews` 
+  )
+SELECT 
+id,
+host_id,
+price,
+number_of_reviews,
+COALESCE(CAST(last_review AS STRING), '0') AS last_review,
+COALESCE(CAST(reviews_per_month AS STRING), '0') AS reviews_per_month,
+calculated_host_listings_count,
+availability_365
+FROM deduplicate
+WHERE row_num = 1 AND REGEXP_CONTAINS(id,  r'^[0-9]+$')
+#Se creo una tabla de reviews clean pero sin fecha para la creacion de tablar en Power Bi
+WITH deduplicate AS (
+    SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY id ORDER BY id) AS row_num
+    FROM `airbnb-412500.airbnb.reviews` 
+  )
+SELECT 
+id,
+host_id,
+number_of_reviews,
+COALESCE(CAST(last_review AS STRING), '0') AS last_review,
+COALESCE(CAST(reviews_per_month AS STRING), '0') AS reviews_per_month,
+calculated_host_listings_count,
+FROM deduplicate
+WHERE row_num = 1 AND REGEXP_CONTAINS(id,  r'^[0-9]+$')
+AND number_of_reviews != '0'
+
+
 
