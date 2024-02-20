@@ -9,4 +9,4 @@ En este análisis exploratorio, utilicé técnicas avanzadas de BI para visualiz
 
 # Herramientas que se usaron
 ➡SQL
-➡Power BI 
+➡Power BI (Uso de formulas DAX)
